@@ -1,0 +1,165 @@
+"use server";
+
+import { clerkClient, currentUser } from "@clerk/nextjs/server";
+
+import { db } from "./db";
+import { Upload } from "lucide-react";
+import { redirect } from "next/navigation";
+import { User } from "@prisma/client";
+import { usedDynamicAPIs } from "next/dist/server/app-render/dynamic-rendering";
+export const getAuthUserDetails = async () => {
+  const user = await currentUser();
+  if (!user) {
+    return;
+  }
+
+  const userData = await db.user.findUnique({
+    where: {
+      email: user.emailAddresses[0].emailAddress,
+    },
+    include: {
+      Agency: {
+        include: {
+          SidebarOption: true,
+          SubAccount: {
+            include: {
+              SidebarOption: true,
+            },
+          },
+        },
+      },
+      Permissions: true,
+    },
+  });
+
+  return userData;
+};
+
+export const saveActivityLogNotification = async ({
+  agencyId,
+  description,
+  subaccountId,
+}: {
+  agencyId?: string;
+  description: string;
+  subaccountId?: string;
+}) => {
+  const authUser = await currentUser();
+  let userData;
+  if (!authUser) {
+    const responce = await db.user.findFirst({
+      where: {
+        Agency: {
+          SubAccount: {
+            some: { id: subaccountId },
+          },
+        },
+      },
+    });
+    if (responce) {
+      userData = responce;
+    }
+  } else {
+    userData = await db.user.findUnique({
+      where: { email: authUser?.emailAddresses[0].emailAddress },
+    });
+  }
+  if (!userData) {
+    console.log("Could not find a user");
+    return;
+  }
+  let foundAgencyId = agencyId;
+  if (!foundAgencyId) {
+    if (!subaccountId) {
+      throw new Error(
+        "You need to provide atlleast an agencyId or subaccountId"
+      );
+    }
+    const responce = await db.subAccount.findUnique({
+      where: { id: subaccountId },
+    });
+    if (responce) foundAgencyId = responce.agencyId;
+  }
+  if (subaccountId) {
+    await db.notification.create({
+      data: {
+        notification: `${userData.name} | ${description}`,
+        User: {
+          connect: {
+            id: userData.id,
+          },
+        },
+        Agency: {
+          connect: { id: foundAgencyId },
+        },
+        SubAccount: {
+          connect: { id: subaccountId },
+        },
+      },
+    });
+  } else {
+    await db.notification.create({
+      data: {
+        notification: `${userData.name} | ${description}`,
+        User: { connect: { id: userData.id } },
+        Agency: { connect: { id: foundAgencyId } },
+      },
+    });
+  }
+};
+
+export const createTeamUser = async (agencyId: string, user: User) => {
+  if (user.role === "AGENCY_OWNER") return null;
+  const responce = await db.user.create({ data: { ...user } });
+  return  responce ; 
+};
+
+export const verifyAndAcceptInvitation = async () => {
+  const user = await currentUser();
+  if (!user) {
+    redirect("/sign-in");
+    return;
+  }
+  const invitationExists = await db.invitation.findUnique({
+    where: { email: user.emailAddresses[0].emailAddress, status: "PENDING" },
+  });
+
+  if (invitationExists) {
+    const userDetails = await createTeamUser(invitationExists.agencyId, {
+      email: invitationExists.email,
+      agencyId: invitationExists.agencyId,
+      avatarUrl: user.imageUrl,
+      id: user.id,
+      role: invitationExists.role,
+      name: `${user.firstName} ${user.lastName}`,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    await saveActivityLogNotification({
+      agencyId: invitationExists?.agencyId,
+      description: `Joined`,
+      subaccountId: undefined,
+    });
+
+    if (userDetails) {
+      await clerkClient.users.updateUserMetadata(user.id, {
+        privateMetadata: {
+          role: userDetails.role || "SUBACCOUNT_USER",
+        },
+      });
+
+      await db.invitation.delete({
+        where:{email: userDetails.email},
+      })
+
+      return userDetails.agencyId
+    } else return null
+  } else{
+    const agency = await db.user.findUnique({
+      where:{
+        email:user.emailAddresses[0].emailAddress,
+      }
+    })
+    return agency?agency.agencyId:null
+  }
+};
