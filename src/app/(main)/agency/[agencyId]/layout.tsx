@@ -37,10 +37,12 @@ const layout = async ({ children, params }: Props) => {
   }
 
   return (
-    <div className="h-screen overflow-hidden">
-      {/* <Sidebar id={params.agencyId} type="agency"> </Sidebar>
-      <div className="md:pl-[300px] ">{children}</div> */}
-      {children}
+    <div className="h-screen overflow-hidden text-white">
+      
+      <Sidebar id={params.agencyId} type="agency"/>
+      <div className="md:pl-[300px] ">{children}</div>
+      
+      
     </div>
   );
 };

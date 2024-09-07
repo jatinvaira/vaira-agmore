@@ -84,7 +84,7 @@ export const saveActivityLogNotification = async ({
   if (subaccountId) {
     await db.notification.create({
       data: {
-        notification: userData.name + " | " + description,
+        notification: userData.name + " | " + description, 
         User: {
           connect: {
             id: userData.id,
