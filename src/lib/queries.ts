@@ -5,8 +5,9 @@ import { clerkClient, currentUser } from "@clerk/nextjs/server";
 import { db } from "./db";
 import { Upload } from "lucide-react";
 import { redirect } from "next/navigation";
-import { User } from "@prisma/client";
+import { Agency, Plan, User } from "@prisma/client";
 import { usedDynamicAPIs } from "next/dist/server/app-render/dynamic-rendering";
+import { toast } from "@/components/ui/use-toast";
 export const getAuthUserDetails = async () => {
   const user = await currentUser();
   if (!user) {
@@ -47,7 +48,7 @@ export const saveActivityLogNotification = async ({
   const authUser = await currentUser();
   let userData;
   if (!authUser) {
-    const responce = await db.user.findFirst({
+    const response = await db.user.findFirst({
       where: {
         Agency: {
           SubAccount: {
@@ -56,8 +57,8 @@ export const saveActivityLogNotification = async ({
         },
       },
     });
-    if (responce) {
-      userData = responce;
+    if (response) {
+      userData = response;
     }
   } else {
     userData = await db.user.findUnique({
@@ -75,15 +76,15 @@ export const saveActivityLogNotification = async ({
         "You need to provide atlleast an agencyId or subaccountId"
       );
     }
-    const responce = await db.subAccount.findUnique({
+    const response = await db.subAccount.findUnique({
       where: { id: subaccountId },
     });
-    if (responce) foundAgencyId = responce.agencyId;
+    if (response) foundAgencyId = response.agencyId;
   }
   if (subaccountId) {
     await db.notification.create({
       data: {
-        notification: `${userData.name} | ${description}`,
+        notification: userData.name + " | " + description,
         User: {
           connect: {
             id: userData.id,
@@ -100,7 +101,7 @@ export const saveActivityLogNotification = async ({
   } else {
     await db.notification.create({
       data: {
-        notification: `${userData.name} | ${description}`,
+        notification: userData.name + " | " + description,
         User: { connect: { id: userData.id } },
         Agency: { connect: { id: foundAgencyId } },
       },
@@ -110,8 +111,8 @@ export const saveActivityLogNotification = async ({
 
 export const createTeamUser = async (agencyId: string, user: User) => {
   if (user.role === "AGENCY_OWNER") return null;
-  const responce = await db.user.create({ data: { ...user } });
-  return  responce ; 
+  const response = await db.user.create({ data: { ...user } });
+  return response;
 };
 
 export const verifyAndAcceptInvitation = async () => {
@@ -121,7 +122,10 @@ export const verifyAndAcceptInvitation = async () => {
     return;
   }
   const invitationExists = await db.invitation.findUnique({
-    where: { email: user.emailAddresses[0].emailAddress, status: "PENDING" },
+    where: {
+      email: user.emailAddresses[0].emailAddress,
+      status: "PENDING",
+    },
   });
 
   if (invitationExists) {
@@ -131,7 +135,7 @@ export const verifyAndAcceptInvitation = async () => {
       avatarUrl: user.imageUrl,
       id: user.id,
       role: invitationExists.role,
-      name: `${user.firstName} ${user.lastName}`,
+      name: (user.firstName ?? "") + " " + (user.lastName ?? "").trim(),
       createdAt: new Date(),
       updatedAt: new Date(),
     });
@@ -149,17 +153,135 @@ export const verifyAndAcceptInvitation = async () => {
       });
 
       await db.invitation.delete({
-        where:{email: userDetails.email},
-      })
+        where: { email: userDetails.email },
+      });
 
-      return userDetails.agencyId
-    } else return null
-  } else{
+      return userDetails.agencyId;
+    } else return null;
+  } else {
     const agency = await db.user.findUnique({
-      where:{
-        email:user.emailAddresses[0].emailAddress,
-      }
-    })
-    return agency?agency.agencyId:null
+      where: {
+        email: user.emailAddresses[0].emailAddress,
+      },
+    });
+    return agency ? agency.agencyId : null;
+  }
+};
+
+export const updateAgencyDetails = async (
+  agencyId: string,
+  agencyDetails: Partial<Agency>
+) => {
+  const response = await db.agency.update({
+    where: { id: agencyId },
+    data: { ...agencyDetails },
+  });
+  return response;
+};
+
+export const deleteAgency = async (agencyId: string) => {
+  const response = await db.agency.delete({ where: { id: agencyId } });
+  return response;
+};
+
+export const initUser = async (newUser: Partial<User>) => {
+  const user = await currentUser();
+  if (!user) return;
+
+  const userData = await db.user.upsert({
+    where: {
+      email: user.emailAddresses[0].emailAddress,
+    },
+    update: newUser,
+    create: {
+      id: user.id,
+      avatarUrl: user.imageUrl,
+      email: user.emailAddresses[0].emailAddress,
+      name: (user.firstName ?? "") + " " + (user.lastName ?? "").trim(),
+      role: newUser.role || "SUBACCOUNT_USER",
+    },
+  });
+  await clerkClient.users.updateUserMetadata(user.id, {
+    privateMetadata: {
+      role: newUser.role || "SUBACCOUNT_USER",
+    },
+  });
+  return userData;
+};
+
+export const upsertAgency = async (agency: Agency, price?: Plan) => {
+  if (!agency.companyEmail) return null;
+  try {
+    const agencyDetails = await db.agency.upsert({
+      where: {
+        id: agency.id,
+      },
+      update: agency,
+      create: {
+        users: {
+          connect: {
+            email: agency.companyEmail,
+          },
+        },
+        ...agency,
+        SidebarOption: {
+          create: [
+            {
+              name: "Dashboard",
+              icon: "category",
+              link: "/agency/" + agency.id,
+            },
+            {
+              name: "Launchpad",
+              icon: "clipboardIcon",
+              link: "/agency/" + agency.id + "/launchpad",
+            },
+            {
+              name: "Billing",
+              icon: "payment",
+              link: "/agency/" + agency.id + "/billing",
+            },
+            {
+              name: "Settings",
+              icon: "settings",
+              link: "/agency/" + agency.id + "/settings",
+            },
+            {
+              name: "Sub Accounts",
+              icon: "person",
+              link: "/agency/" + agency.id + "/all-subaccounts",
+            },
+            {
+              name: "Team",
+              icon: "shield",
+              link: "/agency/" + agency.id + "/team",
+            },
+          ],
+        },
+      },
+    });
+    return agencyDetails;
+  } catch (error) {
+    console.error(error);
+    toast({
+      variant: "destructive",
+      title: "Oops!",
+      description: "Could not create your agency",
+    });
+  }
+};
+
+export const getNotificationAndUser = async (agencyId: string) => {
+  try {
+    const response = await db.notification.findMany({
+      where: { agencyId },
+      include: { User: true },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+    return response;
+  } catch (error) {
+    console.log(error);
   }
 };
