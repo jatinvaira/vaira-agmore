@@ -3,6 +3,8 @@ import { DM_Sans, Inter } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/providers/theme-provider";
 import { ModeToggle } from "@/components/global/mode-toggle";
+import ModalProvider from "@/providers/modal-provider";
+import { Toaster } from "@/components/ui/toaster";
 
 const inter = DM_Sans({ subsets: ["latin"] });
 
@@ -28,7 +30,10 @@ export default function RootLayout({
         >
           
 
-          {children}
+          <ModalProvider>{children}
+            <Toaster/>
+            
+          </ModalProvider>
         </ThemeProvider>
         </body>
       </html>
