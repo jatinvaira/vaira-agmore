@@ -43,12 +43,12 @@ export const saveActivityLogsNotification = async ({
   description,
   subaccountId,
 }: {
-  agencyId?: string
-  description: string
-  subaccountId?: string
+  agencyId?: string;
+  description: string;
+  subaccountId?: string;
 }) => {
-  const authUser = await currentUser()
-  let userData
+  const authUser = await currentUser();
+  let userData;
   if (!authUser) {
     const response = await db.user.findFirst({
       where: {
@@ -58,32 +58,32 @@ export const saveActivityLogsNotification = async ({
           },
         },
       },
-    })
+    });
     if (response) {
-      userData = response
+      userData = response;
     }
   } else {
     userData = await db.user.findUnique({
       where: { email: authUser?.emailAddresses[0].emailAddress },
-    })
+    });
   }
 
   if (!userData) {
-    console.log('Could not find a user')
-    return
+    console.log("Could not find a user");
+    return;
   }
 
-  let foundAgencyId = agencyId
+  let foundAgencyId = agencyId;
   if (!foundAgencyId) {
     if (!subaccountId) {
       throw new Error(
-        'You need to provide atleast an agency Id or subaccount Id'
-      )
+        "You need to provide atleast an agency Id or subaccount Id"
+      );
     }
     const response = await db.subAccount.findUnique({
       where: { id: subaccountId },
-    })
-    if (response) foundAgencyId = response.agencyId
+    });
+    if (response) foundAgencyId = response.agencyId;
   }
   if (subaccountId) {
     await db.notification.create({
@@ -103,7 +103,7 @@ export const saveActivityLogsNotification = async ({
           connect: { id: subaccountId },
         },
       },
-    })
+    });
   } else {
     await db.notification.create({
       data: {
@@ -119,9 +119,9 @@ export const saveActivityLogsNotification = async ({
           },
         },
       },
-    })
+    });
   }
-}
+};
 
 export const createTeamUser = async (agencyId: string, user: User) => {
   if (user.role === "AGENCY_OWNER") return null;
@@ -425,4 +425,18 @@ export const changeUserPermissions = async (
   } catch (error) {
     console.log("🔴Could not change the permission");
   }
+};
+
+export const getSubaccountDetails = async (subaccountId: string) => {
+  const response = await db.subAccount.findUnique({
+    where: {
+      id: subaccountId,
+    },
+  });
+  return response;
+};
+
+export const deleteSubAccount = async (subaccountId: string) => {
+  const response = await db.subAccount.delete({ where: { id: subaccountId } });
+  return response;
 };
