@@ -38,7 +38,7 @@ export const getAuthUserDetails = async () => {
   return userData;
 };
 
-export const saveActivityLogNotification = async ({
+export const saveActivityLogsNotification = async ({
   agencyId,
   description,
   subaccountId,
@@ -67,15 +67,17 @@ export const saveActivityLogNotification = async ({
       where: { email: authUser?.emailAddresses[0].emailAddress },
     });
   }
+
   if (!userData) {
     console.log("Could not find a user");
     return;
   }
+
   let foundAgencyId = agencyId;
   if (!foundAgencyId) {
     if (!subaccountId) {
       throw new Error(
-        "You need to provide atlleast an agencyId or subaccountId"
+        "You need to provide atleast an agency Id or subaccount Id"
       );
     }
     const response = await db.subAccount.findUnique({
@@ -86,14 +88,16 @@ export const saveActivityLogNotification = async ({
   if (subaccountId) {
     await db.notification.create({
       data: {
-        notification: userData.name + " | " + description,
+        notification: `${userData.name} | ${description}`,
         User: {
           connect: {
             id: userData.id,
           },
         },
         Agency: {
-          connect: { id: foundAgencyId },
+          connect: {
+            id: foundAgencyId,
+          },
         },
         SubAccount: {
           connect: { id: subaccountId },
@@ -103,9 +107,17 @@ export const saveActivityLogNotification = async ({
   } else {
     await db.notification.create({
       data: {
-        notification: userData.name + " | " + description,
-        User: { connect: { id: userData.id } },
-        Agency: { connect: { id: foundAgencyId } },
+        notification: `${userData.name} | ${description}`,
+        User: {
+          connect: {
+            id: userData.id,
+          },
+        },
+        Agency: {
+          connect: {
+            id: foundAgencyId,
+          },
+        },
       },
     });
   }
@@ -141,7 +153,7 @@ export const verifyAndAcceptInvitation = async () => {
       createdAt: new Date(),
       updatedAt: new Date(),
     });
-    await saveActivityLogNotification({
+    await saveActivityLogsNotification({
       agencyId: invitationExists?.agencyId,
       description: `Joined`,
       subaccountId: undefined,
@@ -367,4 +379,50 @@ export const upsertSubAccount = async (subAccount: SubAccount) => {
     },
   });
   return response;
+};
+
+export const getUserPermissions = async (userId: string) => {
+  const response = await db.user.findUnique({
+    where: { id: userId },
+
+    select: { Permissions: { include: { SubAccount: true } } },
+  });
+  return response;
+};
+
+export const updateUser = async (user: Partial<User>) => {
+  const response = await db.user.update({
+    where: { email: user.email },
+    data: { ...user },
+  });
+
+  await clerkClient.users.updateUserMetadata(response.id, {
+    privateMetadata: {
+      role: user.role || "SUBACCOUNT_USER",
+    },
+  });
+
+  return response;
+};
+
+export const changeUserPermissions = async (
+  permissionId: string | undefined,
+  userEmail: string,
+  subAccountId: string,
+  permission: boolean
+) => {
+  try {
+    const response = await db.permissions.upsert({
+      where: { id: permissionId },
+      update: { access: permission },
+      create: {
+        access: permission,
+        email: userEmail,
+        subAccountId: subAccountId,
+      },
+    });
+    return response;
+  } catch (error) {
+    console.log("🔴Could not change the permission");
+  }
 };

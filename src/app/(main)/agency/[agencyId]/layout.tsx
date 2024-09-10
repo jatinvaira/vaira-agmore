@@ -5,8 +5,10 @@ import {
 import React, { useEffect } from "react";
 import { currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
-import Sidebar from '@/components/sidebar'
+import Sidebar from "@/components/sidebar";
 import Unauthorized from "@/components/unauthorized";
+import BlurPage from "@/components/global/blur-page";
+import InfoBar from "@/components/global/infobar";
 
 type Props = {
   children: React.ReactNode;
@@ -16,7 +18,7 @@ type Props = {
 const layout = async ({ children, params }: Props) => {
   const agencyId = await verifyAndAcceptInvitation();
   const user = await currentUser();
-  
+
   if (!user) {
     return redirect("/");
   }
@@ -38,11 +40,12 @@ const layout = async ({ children, params }: Props) => {
 
   return (
     <div className="h-screen overflow-hidden text-white">
-      
-      <Sidebar id={params.agencyId} type="agency"/>
-      <div className="md:pl-[300px] ">{children}</div>
-      
-      
+      <Sidebar id={params.agencyId} type="agency" />
+
+      <div className="md:pl-[300px] ">
+        <InfoBar notifications={allNoti}/>
+        <div className="relative"><BlurPage>{children}</BlurPage></div>
+      </div>
     </div>
   );
 };

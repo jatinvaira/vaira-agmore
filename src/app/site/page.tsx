@@ -3,7 +3,7 @@ import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import clsx from "clsx";
 import Link from "next/link";
-import { pricingCards } from "@/lib/constantes";
+import { pricingCards } from "@/lib/constants";
 import {
   Card,
   CardContent,
@@ -17,7 +17,7 @@ export default async function Home() {
   return (
     <>
       <section className="h-full wi-full pt-36 relative flex items-center justify-center flex-col">
-      <div className="absolute inset-0 -z-10 h-full w-full bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:90px_85px]"></div>
+        <div className="absolute inset-0 -z-10 h-full w-full bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:90px_85px]"></div>
         <p className="text-center">Run your agency, in one place</p>
         <div className="bg-gradient-to-r from-primary to-secondary-foreground text-transparent bg-clip-text relative">
           <h1 className="text-9xl font-bold text-center md:text-[300px]">
@@ -44,7 +44,7 @@ export default async function Home() {
         </p>
         <div className="flex  justify-center gap-4 flex-wrap mt-6">
           {pricingCards.map((card) => (
-          // WIP:Wire up free product from stripe
+            // WIP:Wire up free product from stripe
             <Card
               key={card.title}
               className={clsx("w-[300px] flex flex-col justify-between", {
@@ -61,7 +61,7 @@ export default async function Home() {
                 </CardTitle>
                 <CardDescription>{card.description}</CardDescription>
               </CardHeader>
-              
+
               <CardContent>
                 <span className="text-4xl font-bold">{card.price}</span>
                 <span className="text-muted-foreground">/m</span>
