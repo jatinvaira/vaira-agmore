@@ -69,70 +69,71 @@ model Permissions {
   id           String     @id @default(uuid())
   email        String
   User         User       @relation(fields: [email], references: [email], onDelete: Cascade)
-  subAccountId String
-  SubAccount   SubAccount @relation(fields: [subAccountId], references: [id], onDelete: Cascade)
+  subAccountId String?
+  SubAccount   SubAccount? @relation(fields: [subAccountId], references: [id], onDelete: Cascade)
   access       Boolean
 
   @@index([subAccountId])
   @@index([email])
 }
 
-model Agency {
-  id               String                @id @default(uuid())
-  connectAccountId String?               @default("")
-  // customerId       String                @default("")
-  name             String
-  agencyLogo       String                @db.Text
-  companyEmail     String                @db.Text
-  companyPhone     String
-  whiteLabel       Boolean               @default(true)
-  address          String
-  city             String
-  zipCode          String
-  state            String
-  country          String
-  goal             Int                   @default(5)
-  users            User[]
-  createdAt        DateTime              @default(now())
-  updatedAt        DateTime              @updatedAt
-  SubAccount       SubAccount[]
-  SidebarOption    AgencySidebarOption[]
-  Invitation       Invitation[]
-  Notification     Notification[]
-  Subscription     Subscription?
-  AddOns           AddOns[]
-}
 
-model SubAccount {
-  id               String                    @id @default(uuid())
-  connectAccountId String?                   @default("")
-  name             String
-  subAccountLogo   String                    @db.Text
-  createdAt        DateTime                  @default(now())
-  updatedAt        DateTime                  @updatedAt
-  companyEmail     String                    @db.Text
-  companyPhone     String
-  goal             Int                       @default(5)
-  address          String
-  city             String
-  zipCode          String
-  state            String
-  country          String
-  agencyId         String
-  Agency           Agency                    @relation(fields: [agencyId], references: [id], onDelete: Cascade)
-  SidebarOption    SubAccountSidebarOption[]
-  Permissions      Permissions[]
-  Funnels          Funnel[]
-  Media            Media[]
-  Contact          Contact[]
-  Trigger          Trigger[]
-  Automation       Automation[]
-  Pipeline         Pipeline[]
-  Tags             Tag[]
-  Notification     Notification[]
+  model Agency {
+    id               String                @id @default(uuid())
+    connectAccountId String?               @default("")
+    // customerId       String                @default("")
+    name             String
+    agencyLogo       String                @db.Text
+    companyEmail     String                @db.Text
+    companyPhone     String
+    whiteLabel       Boolean               @default(true)
+    address          String
+    city             String
+    zipCode          String
+    state            String
+    country          String
+    goal             Int                   @default(5)
+    users            User[]
+    createdAt        DateTime              @default(now())
+    updatedAt        DateTime              @updatedAt
+    SubAccount       SubAccount[]
+    SidebarOption    AgencySidebarOption[]
+    Invitation       Invitation[]
+    Notification     Notification[]
+    Subscription     Subscription?
+    AddOns           AddOns[]
+  }
 
-  @@index([agencyId])
-}
+  model SubAccount {
+    id               String                    @id @default(uuid())
+    connectAccountId String?                   @default("")
+    name             String
+    subAccountLogo   String                    @db.Text
+    createdAt        DateTime                  @default(now())
+    updatedAt        DateTime                  @updatedAt
+    companyEmail     String                    @db.Text
+    companyPhone     String
+    goal             Int                       @default(5)
+    address          String
+    city             String
+    zipCode          String
+    state            String
+    country          String
+    agencyId         String
+    Agency           Agency                    @relation(fields: [agencyId], references: [id], onDelete: Cascade)
+    SidebarOption    SubAccountSidebarOption[]
+    Permissions      Permissions[]
+    Funnels          Funnel[]
+    Media            Media[]
+    Contact          Contact[]
+    Trigger          Trigger[]
+    Automation       Automation[]
+    Pipeline         Pipeline[]
+    Tags             Tag[]
+    Notification     Notification[]
+
+    @@index([agencyId])
+  }
 
 model Tag {
   id           String   @id @default(uuid())

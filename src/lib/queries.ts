@@ -10,6 +10,7 @@ import { usedDynamicAPIs } from "next/dist/server/app-render/dynamic-rendering";
 import { toast } from "@/components/ui/use-toast";
 import { v4 } from "uuid";
 import { sub } from "date-fns";
+import { CreateMediaType } from "./types";
 export const getAuthUserDetails = async () => {
   const user = await currentUser();
   if (!user) {
@@ -122,19 +123,33 @@ export const saveActivityLogsNotification = async ({
     });
   }
 };
+// export const createTeamUser = async (agencyId: string, user: User) => {
+//   if (user.role === "AGENCY_OWNER") return null;
+//   const response = await db.user.create({ data: { ...user } });
+//   return response;
+// };
 
 export const createTeamUser = async (agencyId: string, user: User) => {
   if (user.role === "AGENCY_OWNER") return null;
-  const response = await db.user.create({ data: { ...user } });
+
+  const existingUser = await db.user.findUnique({
+    where: { email: user.email }, // Replace `email` with the unique field you want to check.
+  });
+
+  if (existingUser) {
+    throw new Error("User already exists"); // Handle this as per your requirement.
+  }
+
+  const response = await db.user.create({
+    data: { ...user },
+  });
+
   return response;
 };
 
 export const verifyAndAcceptInvitation = async () => {
   const user = await currentUser();
-  if (!user) {
-    redirect("/sign-in");
-    return;
-  }
+  if (!user) return redirect("/sign-in");
   const invitationExists = await db.invitation.findUnique({
     where: {
       email: user.emailAddresses[0].emailAddress,
@@ -148,8 +163,8 @@ export const verifyAndAcceptInvitation = async () => {
       agencyId: invitationExists.agencyId,
       avatarUrl: user.imageUrl,
       id: user.id,
+      name: `${user.firstName} ${user.lastName}`,
       role: invitationExists.role,
-      name: (user.firstName ?? "") + " " + (user.lastName ?? "").trim(),
       createdAt: new Date(),
       updatedAt: new Date(),
     });
@@ -181,7 +196,6 @@ export const verifyAndAcceptInvitation = async () => {
     return agency ? agency.agencyId : null;
   }
 };
-
 export const updateAgencyDetails = async (
   agencyId: string,
   agencyDetails: Partial<Agency>
@@ -461,27 +475,60 @@ export const getUser = async (id: string) => {
   return user;
 };
 
-export const sendInvitation = async(
-  role:Role,
+export const sendInvitation = async (
+  role: Role,
   email: string,
-  agencyId:string
-)=>{
+  agencyId: string
+) => {
   const response = await db.invitation.create({
-    data:{email,agencyId, role}
-  })
-  try{
+    data: { email, agencyId, role },
+  });
+  try {
     const invitation = await clerkClient.invitations.createInvitation({
       emailAddress: email,
       redirectUrl: process.env.NEXT_PUBLIC_URL,
-      publicMetadata
-      :{
-        throughInvitation:true,
+      publicMetadata: {
+        throughInvitation: true,
         role,
-      }
-    })
-  }catch(error){
-    console.log(error)
-    throw error
+      },
+    });
+  } catch (error) {
+    console.log(error);
+    throw error;
   }
-  return response
-}
+  return response;
+};
+
+export const getMedia = async (subaccountId: string) => {
+  const mediafiles = await db.subAccount.findUnique({
+    where: {
+      id: subaccountId,
+    },
+    include: { Media: true },
+  });
+
+  return mediafiles;
+};
+
+export const createMedia = async (
+  subaccountId: string,
+  mediaFiles: CreateMediaType
+) => {
+  const response = await db.media.create({
+    data: {
+      link: mediaFiles.link,
+      name: mediaFiles.name,
+      subAccountId: subaccountId,
+    },
+  });
+  return response;
+};
+
+export const deleteMedia = async (mediaId: string) => {
+  const response = await db.media.delete({
+    where: {
+      id: mediaId,
+    },
+  });
+  return response;
+};

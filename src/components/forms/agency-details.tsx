@@ -32,7 +32,7 @@ import FileUpload from "../global/file-upload";
 import { Input } from "../ui/input";
 import { Switch } from "../ui/switch";
 import {
-  saveActivityLogNotification,
+  saveActivityLogsNotification,
   deleteAgency,
   updateAgencyDetails,
   initUser,
@@ -83,7 +83,7 @@ const AgencyDetails = ({ data }: Props) => {
     if (data) {
       form.reset(data);
     }
-  }, [data]);
+  }, [data, form]);
 
   // const handleSubmit = async () => {};
   // function onChange(url?: string | undefined): void {
@@ -358,7 +358,7 @@ const AgencyDetails = ({ data }: Props) => {
                     onValueChange={async (val: number) => {
                       if (!data?.id) return;
                       await updateAgencyDetails(data.id, { goal: val });
-                      await saveActivityLogNotification({
+                      await saveActivityLogsNotification({
                         agencyId: data.id,
                         description: `Updated the agency goal to | ` +val+` Sub Account`,
                         subaccountId: undefined,
