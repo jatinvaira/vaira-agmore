@@ -36,7 +36,7 @@ const Navigation = (props: Props) => {
           href={"/agency"}
           className="bg-primary text-white p-2 px-4 rounded-md hover:bg-primary/80"
         >
-          Login
+          Dashboard
         </Link>
         <UserButton />
         <ModeToggle></ModeToggle>

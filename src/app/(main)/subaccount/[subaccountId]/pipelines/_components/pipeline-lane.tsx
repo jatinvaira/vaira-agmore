@@ -127,7 +127,7 @@ const PipelineLane: React.FC<PipelaneLaneProps> = ({
       {(provided, snapshot) => {
         if (snapshot.isDragging) {
           //@ts-ignore
-          const offset = { x: 30, y: 10 }
+          const offset = { x: 300, y: -10 }
           //@ts-ignore
           const x = provided.draggableProps.style?.left - offset.x
           //@ts-ignore
@@ -147,7 +147,7 @@ const PipelineLane: React.FC<PipelaneLaneProps> = ({
           >
             <AlertDialog>
               <DropdownMenu>
-                <div className="bg-slate-200/30 dark:bg-background/20  h-[700px] w-[300px] px-4 relative rounded-lg overflow-auto flex-shrink-0 ">
+                <div className="bg-slate-200/30 dark:bg-background/20  h-[700px] w-[300px] px-4 relative rounded-lg overflow-visible flex-shrink-0 ">
                   <div
                     {...provided.dragHandleProps}
                     className=" h-14 backdrop-blur-lg dark:bg-background/40 bg-slate-200/60  absolute top-0 left-0 right-0 z-10 "

@@ -59,12 +59,12 @@ const InfoBar = ({ notifications, subAccountId, className, role }: Props) => {
                 <Bell size={17} />
               </div>
             </SheetTrigger>
-            <SheetContent className="mt-4 mr-4 pr-4 overflow-scroll">
+            <SheetContent className="mt-4 mr-4 pr-4  overflow-auto">
               <SheetHeader className="text-left">
                 <SheetTitle>Notifications</SheetTitle>
                 <SheetDescription>
                   {(role === 'AGENCY_ADMIN' || role === 'AGENCY_OWNER') && (
-                    <Card className="flex items-center justify-between p-4">
+                    <Card className="flex items-center justify-between p-4 my-3">
                       Current Subaccount
                       <Switch onCheckedChange={handleClick} />
                     </Card>
@@ -74,7 +74,7 @@ const InfoBar = ({ notifications, subAccountId, className, role }: Props) => {
               {Array.isArray(allNotifications) && allNotifications.map((notification) => (
                 <div
                   key={notification.id}
-                  className="flex flex-col gap-y-2 mb-2 overflow-x-scroll text-ellipsis"
+                  className="flex flex-col gap-y-4 mb-3 mt-2 overflow-x-auto text-ellipsis"
                 >
                   <div className="flex gap-2">
                     <Avatar>

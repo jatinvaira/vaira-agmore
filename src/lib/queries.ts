@@ -728,7 +728,7 @@ export const getSubAccountTeamMembers = async (subaccountId: string) => {
           },
         },
       },
-      role: "SUBACCOUNT_USER",
+      // role: "SUBACCOUNT_USER",
       Permissions: {
         some: {
           subAccountId: subaccountId,
@@ -816,5 +816,16 @@ export const getTagsForSubaccount = async (subaccountId: string) => {
 
 export const deleteTag = async (tagId: string) => {
   const response = await db.tag.delete({ where: { id: tagId } });
+  return response;
+};
+
+export const upsertContact = async (
+  contact: Prisma.ContactUncheckedCreateInput
+) => {
+  const response = await db.contact.upsert({
+    where: { id: contact.id || v4() },
+    update: contact,
+    create: contact,
+  });
   return response;
 };

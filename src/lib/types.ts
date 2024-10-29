@@ -9,6 +9,7 @@ import {
 } from "./queries";
 import { db } from "./db";
 import { z } from "zod";
+import Stripe from "stripe";
 
 export type NotificationWithUser = {
   subAccountId: string | undefined;
@@ -117,3 +118,20 @@ export type ShippingInfo = {
   address: Address
   name: string
 }
+
+
+export type StripeCustomerType = {
+  email:string;
+  name:string;
+  shipping:ShippingInfo;
+  address:Address;
+}
+
+
+export type PricesList = Stripe.ApiList<Stripe.Price>
+
+// export type FunnelsForSubAccount = Prisma.PromiseReturnType<
+//   typeof getFunnels
+// >[0]
+
+export type UpsertFunnelPage = Prisma.FunnelPageCreateWithoutFunnelInput
