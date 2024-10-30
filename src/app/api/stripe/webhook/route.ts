@@ -51,8 +51,7 @@ export async function POST(req: NextRequest) {
     console.log("🟢 Processing Subscription Event:", subscription.id);
 
     if (
-      !subscription.metadata.connectAccountPayments &&
-      !subscription.metadata.connectAccountSubscriptions
+      1==1
     ) {
       switch (stripeEvent.type) {
         case "customer.subscription.created": {

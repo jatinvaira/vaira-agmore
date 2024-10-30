@@ -11,10 +11,7 @@ export const subscriptionCreated = async (
     const agency = await db.agency.findFirst({
       where: {
         customerId,
-      },
-      include: {
-        SubAccount: true,
-      },
+      }
     });
     if (!agency) {
       throw new Error("Could not find and agency to upsert the subscription");
@@ -27,10 +24,10 @@ export const subscriptionCreated = async (
       customerId,
       currentPeriodEndDate: new Date(subscription.current_period_end * 1000),
       //@ts-ignore
-      priceId: subscription.plan.id,
-      subscritiptionId: subscription.id,
+      priceId: subscription.plan.id || '',
+      subscriptionId: subscription.id,
       //@ts-ignore
-      plan: subscription.plan.id,
+      plan: subscription.pause_collection.id || ''
     };
 
     const res = await db.subscription.upsert({

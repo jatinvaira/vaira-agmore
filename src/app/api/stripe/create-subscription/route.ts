@@ -15,23 +15,20 @@ export async function POST(req: Request) {
   });
 
   try {
+    let subscription, clientSecret;
+
     if (
-      subscriptionExists?.Subscription?.subscritiptionId &&
+      subscriptionExists?.Subscription?.subscriptionId &&
       subscriptionExists.Subscription.active
     ) {
-      //update the subscription instead of creating one.
-      if (!subscriptionExists.Subscription.subscritiptionId) {
-        throw new Error(
-          "Could not find the subscription Id to update the subscription."
-        );
-      }
+      // Update the existing subscription
       console.log("Updating the subscription");
       const currentSubscriptionDetails = await stripe.subscriptions.retrieve(
-        subscriptionExists.Subscription.subscritiptionId
+        subscriptionExists.Subscription.subscriptionId
       );
 
-      const subscription = await stripe.subscriptions.update(
-        subscriptionExists.Subscription.subscritiptionId,
+      subscription = await stripe.subscriptions.update(
+        subscriptionExists.Subscription.subscriptionId,
         {
           items: [
             {
@@ -43,34 +40,56 @@ export async function POST(req: Request) {
           expand: ["latest_invoice.payment_intent"],
         }
       );
-      return NextResponse.json({
-        subscriptionId: subscription.id,
-        //@ts-ignore
-        clientSecret: subscription.latest_invoice.payment_intent.client_secret,
-      });
+      //@ts-ignore
+      clientSecret = subscription.latest_invoice?.payment_intent?.client_secret;
     } else {
-      console.log("Createing a sub");
-      const subscription = await stripe.subscriptions.create({
+      // Create a new subscription
+      console.log("Creating a new subscription");
+      subscription = await stripe.subscriptions.create({
         customer: customerId,
-        items: [
-          {
-            price: priceId,
-          },
-        ],
+        items: [{ price: priceId }],
         payment_behavior: "default_incomplete",
         payment_settings: { save_default_payment_method: "on_subscription" },
         expand: ["latest_invoice.payment_intent"],
       });
-      return NextResponse.json({
-        subscriptionId: subscription.id,
-        //@ts-ignore
-        clientSecret: subscription.latest_invoice.payment_intent.client_secret,
+      //@ts-ignore
+      clientSecret = subscription.latest_invoice?.payment_intent?.client_secret;
+
+      // Save the new subscription to the database
+      await db.agency.update({
+        where: { customerId },
+        data: {
+          Subscription: {
+            create: {
+              subscriptionId: subscription.id,
+              active: true,
+              priceId: priceId, // Assuming this is available in your current context
+              customerId: customerId, // Also available in your context
+              currentPeriodEndDate: new Date(subscription.current_period_end * 1000), // Ensure this date is valid
+            },
+          },
+        },
+      });
+      
+    }
+
+    // If updating, update the database entry with new subscription details
+    if (subscriptionExists && subscriptionExists.Subscription) {
+      await db.subscription.update({
+        where: { id: subscriptionExists.Subscription.id },
+        data: {
+          subscriptionId: subscription.id,
+          active: subscription.status === "active",
+        },
       });
     }
-  } catch (error) {
-    console.log("🔴 Error", error);
-    return new NextResponse("Internal Server Error", {
-      status: 500,
+
+    return NextResponse.json({
+      subscriptionId: subscription.id,
+      clientSecret,
     });
+  } catch (error) {
+    console.error("🔴 Error", error);
+    return new NextResponse("Internal Server Error", { status: 500 });
   }
 }
