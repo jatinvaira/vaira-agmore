@@ -2,6 +2,7 @@ import { Contact, Lane, Prisma, Role, Tag, Ticket, User } from "@prisma/client";
 import {
   _getTicketsWithAllRelations,
   getAuthUserDetails,
+  getFunnels,
   getMedia,
   getPipelineDetails,
   getTicketsWithTags,
@@ -43,6 +44,13 @@ const __getUsersWithAgencySubAccountPermissionsSidebarOptions = async (
 export type UserWithPermissionsAndSubAccounts = Prisma.PromiseReturnType<
   typeof getUserPermissions
 >;
+
+
+export const FunnelPageSchema = z.object({
+  name: z.string().min(1),
+  pathName: z.string().optional(),
+})
+
 
 export type AuthUserWithAgencySidebarOptionsSubAccounts =
   Prisma.PromiseReturnType<typeof getAuthUserDetails>;
@@ -130,8 +138,8 @@ export type StripeCustomerType = {
 
 export type PricesList = Stripe.ApiList<Stripe.Price>
 
-// export type FunnelsForSubAccount = Prisma.PromiseReturnType<
-//   typeof getFunnels
-// >[0]
+export type FunnelsForSubAccount = Prisma.PromiseReturnType<
+  typeof getFunnels
+>[0]
 
 export type UpsertFunnelPage = Prisma.FunnelPageCreateWithoutFunnelInput
