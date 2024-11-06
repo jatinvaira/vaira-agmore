@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@atlaskit/pragmatic-drag-and-drop": "^1.4.0",
     "@clerk/nextjs": "^4.29.1",
     "@clerk/themes": "^1.7.9",
     "@hookform/resolvers": "^3.9.0",

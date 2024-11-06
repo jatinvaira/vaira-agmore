@@ -11,13 +11,6 @@ import { useModal } from "@/providers/modal-provider";
 import { FunnelPage } from "@prisma/client";
 import { Check, ExternalLink, LucideEdit } from "lucide-react";
 import React, { useState } from "react";
-import { v4 as uuidv4 } from "uuid";
-import {
-  DragDropContext,
-  DragStart,
-  DropResult,
-  Droppable,
-} from "react-beautiful-dnd";
 import Link from "next/link";
 import FunnelPagePlaceholder from "@/components/icons/funnel-page-placeholder";
 
@@ -37,39 +30,22 @@ type Props = {
 };
 
 const FunnelSteps = ({ funnel, funnelId, pages, subaccountId }: Props) => {
-  const [clickedPage, setClickedPage] = useState<FunnelPage | undefined>(
-    pages[0]
-  );
+  const [clickedPage, setClickedPage] = useState<FunnelPage | undefined>(pages[0]);
   const { setOpen } = useModal();
   const [pagesState, setPagesState] = useState(pages);
-  const onDragStart = (event: DragStart) => {
-    //current chosen page
-    const { draggableId } = event;
-    const value = pagesState.find((page) => page.id === draggableId);
-  };
-  // const uuiddd = uuidv4();
-  // console.log(uuiddd);
-  const onDragEnd = (dropResult: DropResult) => {
-    const { destination, source } = dropResult;
 
-    //no destination or same position
-    if (
-      !destination ||
-      (destination.droppableId === source.droppableId &&
-        destination.index === source.index)
-    ) {
-      return;
-    }
-    //change state
-    const newPageOrder = [...pagesState]
-      .toSpliced(source.index, 1)
-      .toSpliced(destination.index, 0, pagesState[source.index])
-      .map((page, idx) => {
-        return { ...page, order: idx };
-      });
+  const handleDrop = async (e: React.DragEvent<HTMLDivElement>, destinationIdx: number) => {
+    const sourceIdx = parseInt(e.dataTransfer.getData("text/plain"));
+    if (sourceIdx === destinationIdx) return;
 
-    setPagesState(newPageOrder);
-    newPageOrder.forEach(async (page, index) => {
+    const reorderedPages = [...pagesState];
+    const [removed] = reorderedPages.splice(sourceIdx, 1);
+    reorderedPages.splice(destinationIdx, 0, removed);
+
+    const updatedPages = reorderedPages.map((page, idx) => ({ ...page, order: idx }));
+    setPagesState(updatedPages);
+
+    updatedPages.forEach(async (page, index) => {
       try {
         await upsertFunnelPage(
           subaccountId,
@@ -100,41 +76,32 @@ const FunnelSteps = ({ funnel, funnelId, pages, subaccountId }: Props) => {
   return (
     <AlertDialog>
       <div className="flex border-[1px] lg:!flex-row flex-col ">
-        <aside className="flex-[0.3] bg-background p-6  flex flex-col justify-between ">
+        <aside className="flex-[0.3] bg-background p-6 flex flex-col justify-between ">
           <ScrollArea className="h-full ">
             <div className="flex gap-4 items-center">
               <Check />
               Funnel Steps
             </div>
             {pagesState.length ? (
-              <DragDropContext onDragEnd={onDragEnd} onDragStart={onDragStart}>
-                <Droppable
-                  // droppableId="funnels"
-                  droppableId={uuidv4()}
-                  // type="funnels"
-                  // direction="vertical"
-                  // key={uuidv4()}
-                >
-                  {(provided) => (
-                    <div {...provided.droppableProps} ref={provided.innerRef}>
-                      {pagesState.map((page, idx) => (
-                        <div
-                          className="relative"
-                          key={page.id}
-                          onClick={() => setClickedPage(page)}
-                        >
-                          <FunnelStepCard
-                            funnelPage={page}
-                            index={idx}
-                            key={page.id}
-                            activePage={page.id === clickedPage?.id}
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </Droppable>
-              </DragDropContext>
+              <div>
+                {pagesState.map((page, idx) => (
+                  <div
+                    key={page.id}
+                    className="relative"
+                    draggable
+                    onDragStart={(e) => e.dataTransfer.setData("text/plain", idx.toString())}
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={(e) => handleDrop(e, idx)}
+                    onClick={() => setClickedPage(page)}
+                  >
+                    <FunnelStepCard
+                      funnelPage={page}
+                      index={idx}
+                      activePage={page.id === clickedPage?.id}
+                    />
+                  </div>
+                ))}
+              </div>
             ) : (
               <div className="text-center text-muted-foreground py-6">
                 No Pages
@@ -146,7 +113,7 @@ const FunnelSteps = ({ funnel, funnelId, pages, subaccountId }: Props) => {
             onClick={() => {
               setOpen(
                 <CustomModal
-                  title=" Create or Update a Funnel Page"
+                  title="Create or Update a Funnel Page"
                   subheading="Funnel Pages allow you to create step by step processes for customers to follow"
                 >
                   <CreateFunnelPage
@@ -168,7 +135,7 @@ const FunnelSteps = ({ funnel, funnelId, pages, subaccountId }: Props) => {
                 <p className="text-sm text-muted-foreground">Page name</p>
                 <CardTitle>{clickedPage?.name}</CardTitle>
                 <CardDescription className="flex flex-col gap-4">
-                  <div className="border-2 rounded-lg sm:w-80 w-full  overflow-clip">
+                  <div className="border-2 rounded-lg sm:w-80 w-full overflow-clip">
                     <Link
                       href={`/subaccount/${subaccountId}/funnels/${funnelId}/editor/${clickedPage?.id}`}
                       className="relative group"
@@ -178,7 +145,7 @@ const FunnelSteps = ({ funnel, funnelId, pages, subaccountId }: Props) => {
                       </div>
                       <LucideEdit
                         size={50}
-                        className="!text-muted-foreground absolute top-1/2 left-1/2 opacity-0 transofrm -translate-x-1/2 -translate-y-1/2 group-hover:opacity-100 transition-all duration-100"
+                        className="!text-muted-foreground absolute top-1/2 left-1/2 opacity-0 transform -translate-x-1/2 -translate-y-1/2 group-hover:opacity-100 transition-all duration-100"
                       />
                     </Link>
 
