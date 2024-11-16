@@ -5,6 +5,7 @@ import { ThemeProvider } from "@/providers/theme-provider";
 import { ModeToggle } from "@/components/global/mode-toggle";
 import ModalProvider from "@/providers/modal-provider";
 import { Toaster } from "@/components/ui/toaster";
+import {Toaster as SonnarToaster} from '@/components/ui/sonner'
 
 const inter = DM_Sans({ subsets: ["latin"] });
 
@@ -32,7 +33,7 @@ export default function RootLayout({
 
           <ModalProvider>{children}
             <Toaster/>
-            
+            <SonnarToaster/>
           </ModalProvider>
         </ThemeProvider>
         </body>
