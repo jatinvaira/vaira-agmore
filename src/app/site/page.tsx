@@ -12,19 +12,24 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { stripe } from "@/lib/stripe";
 
 export default async function Home() {
+  const prices = await stripe.prices.list({
+    product: process.env.NEXT_PLURA_PRODUCT_ID,
+    active: true,
+  });
   return (
     <>
-      <section className="h-full wi-full pt-36 relative flex items-center justify-center flex-col">
+      <section className="h-full wi-full pt-36 relative flex items-center justify-center flex-col ">
         <div className="absolute inset-0 -z-10 h-full w-full bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:90px_85px]"></div>
-        <p className="text-center">Run your agency, in one place</p>
+        <p className="text-center mt-[350px] pt-28 text-2xl backdrop-blur-2xl">Run your agency, in one place</p>
         <div className="bg-gradient-to-r from-primary to-secondary-foreground text-transparent bg-clip-text relative">
-          <h1 className="text-9xl font-bold text-center md:text-[300px]">
+          <h1 className="text-9xl  font-bold text-center md:text-[300px]">
             Agmore
           </h1>
         </div>
-        <div className="flex justify-center items-center relative md:mt-[-70px]">
+        <div className="flex justify-center items-center relative md:mt-[-60px] ">
           <Image
             src={"/assets/preview.png"}
             alt="banner image"
@@ -33,53 +38,67 @@ export default async function Home() {
             className="rounded-tl-2xl rounded-tr-2xl border-2 border-muted"
           />
         </div>
-        <div className="bottom-0 top-[50%] bg-gradient-to-t dark:from-background left-0 right-0 absolute z-10"></div>
+        <div className="mt-[310px]"><div className="bottom-0 top-[50%] bg-gradient-to-t dark:from-background left-0 right-0 absolute  z-10"></div></div>
       </section>
-      <section className="flex justify-center items-center flex-col gap-4 md:!mt-20 ">
-        <h2 className="text-4xl text-center">Choose what fits you right</h2>
-        <p className="text-muted-foreground text-center gap-4 flex-wrap mt-6">
-          Our Straightforward pricing plans are tailored to meet your needs. If{" "}
-          {"you're"} not
-          <br /> redy to commit you can get started for free.
+
+      <section className="flex justify-center items-center flex-col gap-4 mt-[250px] pb-[100px] ">
+        <h2 className="text-4xl text-center"> Choose what fits you right</h2>
+        <p className="text-muted-foreground text-center">
+          Our straightforward pricing plans are tailored to meet your needs. If
+          {" you're"} not <br />
+          ready to commit you can get started for free.
         </p>
         <div className="flex  justify-center gap-4 flex-wrap mt-6">
-          {pricingCards.map((card) => (
-            // WIP:Wire up free product from stripe
+          {prices.data.map((card) => (
+            //WIP: Wire up free product from stripe
             <Card
-              key={card.title}
+              key={card.nickname}
               className={clsx("w-[300px] flex flex-col justify-between", {
-                "border-2 border-primary": card.title === "Unlimited Saas",
+                "border-2 border-primary": card.nickname === "Unlimited Saas",
               })}
             >
               <CardHeader>
                 <CardTitle
                   className={clsx("", {
-                    "text-muted-foreground": card.title !== "Unlimited Saas",
+                    "text-muted-foreground": card.nickname !== "Unlimited Saas",
                   })}
                 >
-                  {card.title}
+                  {card.nickname}
                 </CardTitle>
-                <CardDescription>{card.description}</CardDescription>
+                <CardDescription>
+                  {
+                    pricingCards.find((c) => c.title === card.nickname)
+                      ?.description
+                  }
+                </CardDescription>
               </CardHeader>
-
               <CardContent>
-                <span className="text-4xl font-bold">{card.price}</span>
-                <span className="text-muted-foreground">/m</span>
+                <span className="text-4xl font-bold">
+                  $ {card.unit_amount && card.unit_amount / 100}
+                </span>
+                <span className="text-muted-foreground">
+                  <span>/ {card.recurring?.interval}</span>
+                </span>
               </CardContent>
               <CardFooter className="flex flex-col items-start gap-4">
                 <div>
-                  {card.features.map((feature) => (
-                    <div key={feature} className="flex gap-2 items-center">
-                      <Check className="text-muted-foreground" />
-                      <p>{feature}</p>
-                    </div>
-                  ))}
+                  {pricingCards
+                    .find((c) => c.title === card.nickname)
+                    ?.features.map((feature) => (
+                      <div key={feature} className="flex gap-2">
+                        <Check />
+                        <p>{feature}</p>
+                      </div>
+                    ))}
                 </div>
                 <Link
-                  href={`/agency?plan=` + card.priceId.toString()}
+                  href={`/agency?plan=${card.id}`}
                   className={clsx(
                     "w-full text-center bg-primary p-2 rounded-md",
-                    { "!bg-muted-foreground": card.title !== "Unlimited Saas" }
+                    {
+                      "!bg-muted-foreground":
+                        card.nickname !== "Unlimited Saas",
+                    }
                   )}
                 >
                   Get Started
@@ -87,8 +106,50 @@ export default async function Home() {
               </CardFooter>
             </Card>
           ))}
+          <Card className={clsx("w-[300px] flex flex-col justify-between")}>
+            <CardHeader>
+              <CardTitle
+                className={clsx({
+                  "text-muted-foreground": true,
+                })}
+              >
+                {pricingCards[0].title}
+              </CardTitle>
+              <CardDescription>{pricingCards[0].description}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <span className="text-4xl font-bold">$0</span>
+              <span>/ month</span>
+            </CardContent>
+            <CardFooter className="flex flex-col  items-start gap-4 ">
+              <div>
+                {pricingCards
+                  .find((c) => c.title === "Starter")
+                  ?.features.map((feature) => (
+                    <div key={feature} className="flex gap-2">
+                      <Check />
+                      <p>{feature}</p>
+                    </div>
+                  ))}
+              </div>
+              <Link
+                href="/agency"
+                className={clsx(
+                  "w-full text-center bg-primary p-2 rounded-md",
+                  {
+                    "!bg-muted-foreground": true,
+                  }
+                )}
+              >
+                Get Started
+              </Link>
+            </CardFooter>
+          </Card>
         </div>
       </section>
+      <footer className="flex flex-col items-center p-5 border-2 ">
+        All rights reserved Vaira
+      </footer>
     </>
   );
 }
