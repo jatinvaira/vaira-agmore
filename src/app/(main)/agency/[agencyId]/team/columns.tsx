@@ -111,7 +111,7 @@ export const columns: ColumnDef<UsersWithAgencySubAccountPermissionsSidebarOptio
                     key={account.id}
                     className="bg-slate-600 w-fit whitespace-nowrap"
                   >
-                    Sub Account - {account.SubAccount.name}
+                    Sub Account - {account.SubAccount?.name}
                   </Badge>
                 ))
               ) : (
