@@ -5,8 +5,6 @@ export default authMiddleware({
   publicRoutes: ["/site", "/api/uploadthing"],
   async beforeAuth(auth, req) {},
   async afterAuth(auth, req) {
-   
-
     const url = req.nextUrl;
     const searchParams = url.searchParams.toString();
     const hostname = req.headers.get("host"); // Correct way to get the host header
@@ -16,9 +14,10 @@ export default authMiddleware({
       url.pathname + (searchParams.length > 0 ? "?" + searchParams : "");
 
     // Check for a custom subdomain
-    const customSubDomain = hostname
-      ? hostname.split(process.env.NEXT_PUBLIC_DOMAIN).filter(Boolean)[0]
-      : null;
+    const customSubDomain =
+      hostname && process.env.NEXT_PUBLIC_DOMAIN
+        ? hostname.split(process.env.NEXT_PUBLIC_DOMAIN).filter(Boolean)[0]
+        : null;
 
     if (customSubDomain) {
       return NextResponse.rewrite(
