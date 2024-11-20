@@ -136,18 +136,19 @@ const UserDetails = ({ id, type, subAccounts, userData }: Props) => {
       val
     );
     if (type === "agency") {
+      const permission = subAccountPermissions?.Permissions?.find(
+        (p) => p.subAccountId === subAccountId
+      );
+
       await saveActivityLogsNotification({
         agencyId: authUserData?.Agency?.id,
         description: `Gave ${userData?.name} access to | ${
-          subAccountPermissions?.Permissions.find(
-            (p) => p.subAccountId === subAccountId
-          )?.SubAccount.name
-        } `,
-        subaccountId: subAccountPermissions?.Permissions.find(
-          (p) => p.subAccountId === subAccountId
-        )?.SubAccount.id,
+          permission?.SubAccount?.name || "Unknown SubAccount"
+        }`,
+        subaccountId: permission?.SubAccount?.id,
       });
     }
+
     if (response) {
       toast({
         title: "Success",
@@ -162,14 +163,14 @@ const UserDetails = ({ id, type, subAccounts, userData }: Props) => {
         });
       }
     } else {
-        toast({
-            variant: 'destructive',
-            title: 'Failed',
-            description: 'Could not update permissions',
-        })
+      toast({
+        variant: "destructive",
+        title: "Failed",
+        description: "Could not update permissions",
+      });
     }
-    router.refresh()
-    setLoadingPermissions(false)
+    router.refresh();
+    setLoadingPermissions(false);
   };
   const onSubmit = async (values: z.infer<typeof userDataSchema>) => {
     if (!id) return;
@@ -193,7 +194,7 @@ const UserDetails = ({ id, type, subAccounts, userData }: Props) => {
           description: "Update User Information",
         });
         setClose();
-        router.refresh()
+        router.refresh();
       } else {
         toast({
           variant: "destructive",
