@@ -135,7 +135,7 @@ const PipelineView = ({
 
   return (
     <DragDropContext onDragEnd={onDragEnd}>
-      <div className="bg-white/60 dark:bg-background/60 rounded-xl p-4 use-automation-zoom-in">
+      <div className="bg-white/60 dark:bg-background/60 rounded-xl  p-4 use-automation-zoom-in">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl">{pipelineDetails?.name}</h1>
           <Button
@@ -154,7 +154,7 @@ const PipelineView = ({
         >
           {(provided) => (
             <div
-              className="flex item-center gap-x-2 overflow-auto"
+              className="flex item-center gap-x-2 overflow-auto "
               {...provided.droppableProps}
               ref={provided.innerRef}
             >

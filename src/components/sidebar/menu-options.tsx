@@ -115,10 +115,10 @@ const MenuOptions = ({
                 </div>
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="mt-4 z-[200]">
+            <PopoverContent className="mt-4 z-[200] ">
               <Command className="rounded-lg">
                 <CommandInput placeholder="Search Accounts..." />
-                <CommandList className="pb-16 overflow-auto" >
+                <CommandList className="pb-16 overflow-auto scrollbar-hidden" >
                   <CommandEmpty> No results found</CommandEmpty>
                   {(user?.role === "AGENCY_OWNER" ||
                     user?.role === "AGENCY_ADMIN") &&
