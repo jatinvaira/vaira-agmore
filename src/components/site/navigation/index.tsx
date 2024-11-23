@@ -23,6 +23,7 @@ const Navigation = (props: Props) => {
             alt="logo"
           />
           <span className="text-xl font-bold select-none">Agmore.</span>
+          {/* fixing pub */}
         </aside>
         <nav className="hidden md:block absolute left-[50%] top-[50%] transform translate-x-[-50%] translate-y-[-50%]">
           <ul className="flex items-center justify-center gap-8">
