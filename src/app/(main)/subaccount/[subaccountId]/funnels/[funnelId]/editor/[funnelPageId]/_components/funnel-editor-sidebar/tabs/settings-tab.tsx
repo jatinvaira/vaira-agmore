@@ -593,7 +593,7 @@ const SettingsTab = (props: Props) => {
           <div>
             <Label className="text-muted-foreground"> Direction</Label>
             <Input
-              placeholder="px"
+              placeholder="direction"
               id="flexDirection"
               onChange={handleOnChanges}
               value={state.editor.selectedElement.styles.flexDirection}
