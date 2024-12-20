@@ -70,15 +70,13 @@ export default async function Home() {
                   {card.nickname}
                 </CardTitle>
                 <CardDescription>
-                  {
-                    pricingCards.find((c) => c.title === card.nickname)
-                      ?.description
-                  }
+                  {pricingCards.find((c) => c.title === card.nickname)
+                    ?.description || "Everything is unlimited"}
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <span className="text-4xl font-bold">
-                  {card.unit_amount && card.unit_amount / 100}
+                  ${card.unit_amount && card.unit_amount / 100}
                 </span>
                 <span className="text-muted-foreground">
                   <span>/ {card.recurring?.interval}</span>
@@ -86,14 +84,30 @@ export default async function Home() {
               </CardContent>
               <CardFooter className="flex flex-col items-start gap-4">
                 <div>
-                  {pricingCards
-                    .find((c) => c.title === card.nickname)
-                    ?.features.map((feature) => (
-                      <div key={feature} className="flex gap-2">
+                  {pricingCards.find((c) => c.title === card.nickname)
+                    ?.features ? (
+                    pricingCards
+                      .find((c) => c.title === card.nickname)
+                      .features.map((feature) => (
+                        <div key={feature} className="flex gap-2">
+                          <Check />
+                          <p>{feature}</p>
+                        </div>
+                      ))
+                  ) : (
+                    // Static fallback content when features do not exist
+                    // eslint-disable-next-line react/jsx-no-comment-textnodes
+                    <>
+                      <div className="flex gap-2">
                         <Check />
-                        <p>{feature}</p>
+                        <p>Everything in Basic</p>
                       </div>
-                    ))}
+                      <div className="flex gap-2">
+                        <Check />
+                        <p>Ulimited Websites</p>
+                      </div>
+                    </>
+                  )}
                 </div>
                 <Link
                   href={`/agency?plan=${card.id}`}
@@ -150,6 +164,20 @@ export default async function Home() {
             </CardFooter>
           </Card>
         </div>
+      </section>
+      <section className="flex justify-center items-center flex-col gap-4 ">
+        <div className="mt-20 "></div>
+        <details> <summary>Click to view the linkedin post</summary>
+        <iframe
+        className="mt-10 aspect-w-16 aspect-h-9 rounded-lg "
+          src="https://www.linkedin.com/embed/feed/update/urn:li:ugcPost:7267271279445983232"
+          height="1300"
+          width="704"
+          allowFullScreen
+          style={{ backgroundColor: 'black' }}
+          title="Embedded post"
+        ></iframe>
+        </details>
       </section>
     </>
   );
